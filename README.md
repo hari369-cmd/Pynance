@@ -2,16 +2,8 @@
 
 # Instructions on how to run the code
 
-Make sure you got the following libraries:
-
-01) Beautiful soup
-02) Pickle
-03) Requests
-04) datetime
-05) csv
-06) matplotlib
-07) pandas
-08) numpy
+The requirements.txt file contains the necessary Python packages with the versions you need to run the script.
+Just run $pip install -r requirements.txt to first install everything necessary.
 
 Since the Selenium part is not included yet, the code can be operated (for now) only in the pre-existing data mode (_LIVE_ = 0).
 If you do not have any pre-existing stock data, do the following:
