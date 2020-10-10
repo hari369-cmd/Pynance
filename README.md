@@ -24,7 +24,7 @@ Running the code will save a csv file titled "xx.csv", where xx is the ticker, t
 
 # What to expect from the code
 
-The code will calculate a paramter called "$threshold$" and this parameter will lie in the range [-1, 1]. The $threshold$ is calculated as an average of momentum deciding parameters obtained from 7 technical indicators. The 7 indicators are as follows:
+The code will calculate a parameter called "$threshold$" and this parameter will lie in the range [-1, 1]. The $threshold$ is calculated as an average of momentum deciding parameters obtained from 7 technical indicators. The 7 indicators are as follows:
 1. Moving Average (ma)
 2. Exponential Moving Average (ema)
 3. Moving Average Convergence Divergence (macd)
