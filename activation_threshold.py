@@ -26,7 +26,7 @@ min_per_change = 0.03 # Minimum percentage change of stock price
 
 # Choose the method of initialization
 LIVE = 0 # 1-Obtain data live, 0-Use pre-existing data
-datafile = 'example.csv' # The pre-existing datafile or this will be the
+datafile = '{}.csv'.format(ticker) # The pre-existing datafile or this will be the
                          # name of the datafile downloaded if get_data = 1
 
 
