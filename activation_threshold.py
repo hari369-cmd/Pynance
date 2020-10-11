@@ -9,6 +9,9 @@ import matplotlib.pyplot as plt
 from matplotlib import style
 import numpy as np
 import csv
+from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
+
 
 style.use("ggplot")
 
