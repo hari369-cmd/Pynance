@@ -8,7 +8,7 @@ Just run $pip install -r requirements.txt to first install everything necessary.
 Since the Selenium part is not included yet, the code can be operated (for now) only in the pre-existing data mode (_LIVE_ = 0).
 If you do not have any pre-existing stock data, do the following:
 1. Set _get_data_ = 1 and make sure _LIVE_ = 0
-2. Change the 'GC=F' in the $ticker$ variable for a ticker of your choice
+2. Change the 'GC=F' in the _ticker_ variable for a ticker of your choice
 3. Set the _start_ and _end_ times during which the data is required. The data will be obtained from Yahoo finance and the default data interval is 1 day. 
 4. Run the code.
 
