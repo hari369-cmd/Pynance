@@ -17,15 +17,16 @@ time_steps = 60 # Minimum number of time data required
 c = time_steps - 1 # Recent price index
 counter = -1 # Counter for number of times data is obtained (Selenium)
 
+# Choose the method of initialization
+LIVE = 0 # 1-Obtain data live, 0-Use pre-existing data (check get_data)
+
 # For pre-existing data or for long data intervals
-get_data = 1 # 1-Obtain past data, 0-Use saved data
+get_data = 0 # 1-Obtain past data, 0-Use saved data
 ticker = 'GC=F' # Stock ticker
-start = dt.datetime(2020, 4, 1) # Start time for data from Yahoo
-end = dt.datetime(2020, 8, 29) # End time for data from Yahoo
+start = dt.datetime(2020, 3, 1) # Start time for data from Yahoo
+end = dt.datetime(2020, 7, 29) # End time for data from Yahoo
 min_per_change = 0.03 # Minimum percentage change of stock price
 
-# Choose the method of initialization
-LIVE = 0 # 1-Obtain data live, 0-Use pre-existing data
 datafile = '{}.csv'.format(ticker) # The pre-existing datafile or this will be the
                          # name of the datafile downloaded if get_data = 1
 
@@ -218,6 +219,10 @@ def rel_strength_index(df_current, counter):
       
     avg_high = sum(df_high) / len(df_high)
     avg_low = sum(df_low) / len(df_low)
+
+    if (avg_low == 0):
+        avg_low == 1
+    
     RS = avg_high / avg_low
     RSI = 100 - (100 / (1 + RS)) # RSI values lie between 0 to 100
     
@@ -245,6 +250,9 @@ def comm_chann_index(df_current, counter):
     df_25ma = df_ma.rolling(window = 25, min_periods = 0).mean()
     df_25ma_std = df_ma.rolling(window = 25, min_periods = 0).std()
 
+    if (df_25ma_std.iloc[c] == 0):
+        df_25ma_std.iloc[c] = 1
+        
     TP = (df_max + df_min + recent_price) / 3
     CCI = (TP - df_25ma.iloc[c]) / (CONST * df_25ma_std.iloc[c]) # returns values between -100 to 100
 
@@ -266,9 +274,13 @@ def stoch_oscillator(df_current, counter):
     
     df_max = max(df_current)
     df_min = min(df_current)
+    denominator = df_max - df_min
 
+    if (denominator == 0):
+        denominator = 1
+    
     # K returns values between 0 to 100
-    K = ((recent_price - df_min) / (df_max - df_min)) * 100
+    K = ((recent_price - df_min) / denominator) * 100
     
     if (K < LOW):
         return 1
@@ -293,9 +305,12 @@ if (LIVE == 1):
         df = read_csv()
         # Obtain the min. number of time period data and save it in df_current
         df_temp = df[(len(df) - time_steps):]
-        df_current = pd.Series(df_temp)
+        df_current = df_temp.iloc[:,0]
     
         if (len(df_current) < time_steps):
+            if (len(df_current) == 0):
+                print("Input data set is empty. Check the csv file")
+                exit()
             print("Time steps greater than number of periods of data")
 
         loc_avg = sum(df_current) / len(df_current)
@@ -331,9 +346,12 @@ else:
     df = read_csv()
     df.drop(["Date","Open","High","Low","Close","Volume"], 1, inplace=True)
     df_temp = df[(len(df) - time_steps):]
-    df_current = pd.Series(df_temp['Adj Close'])
+    df_current = df_temp.iloc[:,0]
     
     if (len(df_current) < time_steps):
+        if (len(df_current) == 0):
+            print("Input data set is empty. Check the csv file")
+            exit()
         print("Time steps greater than number of periods of data")
 
     loc_avg = sum(df_current) / len(df_current) 
