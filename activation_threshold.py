@@ -213,12 +213,12 @@ def rel_strength_index(df_current, counter):
             df_low.append(df_current.iloc[j])
         else:
             continue
-        
+    
     if (len(df_high) == 0):
       df_high.append(0)
     if (len(df_low) == 0):
       df_low.append(0)
-
+      
     avg_high = sum(df_high) / len(df_high)
     avg_low = sum(df_low) / len(df_low)
     RS = avg_high / avg_low
