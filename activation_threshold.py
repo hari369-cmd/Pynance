@@ -1,5 +1,6 @@
 import bs4 as bs
 import pickle
+import re
 import requests
 import datetime as dt
 import os
@@ -10,15 +11,15 @@ from matplotlib import style
 import numpy as np
 import csv
 from selenium import webdriver
+from time import sleep
+from selenium.webdriver.common.keys import Keys
 from webdriver_manager.chrome import ChromeDriverManager
-
-
-style.use("ggplot")
 
 # Basic initialization
 time_steps = 60 # Minimum number of time data required
 c = time_steps - 1 # Recent price index
 counter = -1 # Counter for number of times data is obtained (Selenium)
+style.use("ggplot")
 
 # For pre-existing data or for long data intervals
 get_data = 1 # 1-Obtain past data, 0-Use saved data
@@ -28,9 +29,8 @@ end = dt.datetime(2020, 8, 29) # End time for data from Yahoo
 min_per_change = 0.03 # Minimum percentage change of stock price
 
 # Choose the method of initialization
-LIVE = 0 # 1-Obtain data live, 0-Use pre-existing data
-datafile = '{}.csv'.format(ticker) # The pre-existing datafile or this will be the
-                         # name of the datafile downloaded if get_data = 1
+LIVE = 1 # 1-Obtain data live, 0-Use pre-existing data
+datafile = '{}.csv'.format(ticker) # The pre-existing datafile or this will be the name of the datafile downloaded if get_data = 1
 
 
 
@@ -214,6 +214,11 @@ def rel_strength_index(df_current, counter):
         else:
             continue
         
+    if (len(df_high) == 0):
+      df_high.append(0)
+    if (len(df_low) == 0):
+      df_low.append(0)
+
     avg_high = sum(df_high) / len(df_high)
     avg_low = sum(df_low) / len(df_low)
     RS = avg_high / avg_low
@@ -276,27 +281,83 @@ def stoch_oscillator(df_current, counter):
         return -1
 
 
-# Main part of the code
+driver = webdriver.Chrome(ChromeDriverManager().install())
 
-if (LIVE == 1):
-    # The following code should be inside the Selenium's "for" loop
-    counter += 1
-    time = dt.datetime.now()
+driver.get("https://goldprice.org/")
+i = 1
+for i in range(100):
+    sleep(1)
+    price = driver.find_element_by_xpath('//*[@id="gpxtickerLeft_price"]').text
+    price = float(price.replace(",",""))
 
-    if(counter < time_steps):
-        write_csv([time, price])
-    
-    if(counter > time_steps):
-        write_csv([time, price])
+    i +=1
+
+
+    if (LIVE == 1):
+        # The following code should be inside the Selenium's "for" loop
+        counter += 1
+        time = dt.datetime.now()
+
+        if(counter < time_steps):
+            write_csv([time, price])
+
+        if(counter > time_steps):
+            write_csv([time, price])
+            df = read_csv()
+            # Obtain the min. number of time period data and save it in df_current
+            df_temp = df[(len(df) - time_steps):]
+            #Changed for only prices
+            #df_temp.columns = ['date','price']
+            #df_temp = df_temp.drop(columns='date')
+            df_temp.drop(df.columns[0], 1, inplace=True)
+            #df_current = pd.Series(df_temp['price'])
+            df_current = df_temp.iloc[:,0]
+
+
+            if (len(df_current) < time_steps):
+                print("Time steps greater than number of periods of data")
+
+            loc_avg = sum(df_current)/ len(df_current)
+            diff = (df_current.iloc[c] - loc_avg) / 100
+            if (diff <= 0):
+                diff = -1
+            elif (diff > 0 and diff <= min_per_change):
+                diff = 0
+            else:
+                diff = 1
+
+
+            # Technical indicators
+            ma = moving_average(df_current, counter, diff)
+            ema = exp_moving_average(df_current, counter, diff)
+            macd = MACD(df_current, counter, diff)
+            bb = bol_bands(df_current, counter)
+            # rsi = rel_strength_index(df_current, counter)
+            rsi = 0
+            cci = comm_chann_index(df_current, counter)
+            so = stoch_oscillator(df_current, counter)
+
+            # Average
+            threshold = (ma + ema + macd + bb + rsi + cci + so) / 7
+            print(threshold)
+
+            # Activation condition
+            # Code above should be inside the Selenium's "for" loop
+
+    else:
+        if(get_data == 1):
+            df_web = web.get_data_yahoo(ticker, start, end)
+            df_web.to_csv(datafile)
+            
         df = read_csv()
-        # Obtain the min. number of time period data and save it in df_current
+        df.drop(["Date","Open","High","Low","Close","Volume"], 1, inplace=True)
         df_temp = df[(len(df) - time_steps):]
-        df_current = pd.Series(df_temp)
-    
+        df_current = pd.Series(df_temp['Adj Close'])
+        
         if (len(df_current) < time_steps):
             print("Time steps greater than number of periods of data")
 
-        loc_avg = sum(df_current) / len(df_current)
+        loc_avg = sum(df_current) / len(df_current) 
         diff = (df_current.iloc[c] - loc_avg) / 100
         if (diff <= 0):
             diff = -1
@@ -304,7 +365,9 @@ if (LIVE == 1):
             diff = 0
         else:
             diff = 1
-    
+        
+        counter = 0 # Not applicable for offline data
+        
         # Technical indicators
         ma = moving_average(df_current, counter, diff)
         ema = exp_moving_average(df_current, counter, diff)
@@ -317,43 +380,3 @@ if (LIVE == 1):
         # Average
         threshold = (ma + ema + macd + bb + rsi + cci + so) / 7
         print(threshold)
-
-        # Activation condition
-        # Code above should be inside the Selenium's "for" loop
-
-else:
-    if(get_data == 1):
-        df_web = web.get_data_yahoo(ticker, start, end)
-        df_web.to_csv(datafile)
-        
-    df = read_csv()
-    df.drop(["Date","Open","High","Low","Close","Volume"], 1, inplace=True)
-    df_temp = df[(len(df) - time_steps):]
-    df_current = pd.Series(df_temp['Adj Close'])
-    
-    if (len(df_current) < time_steps):
-        print("Time steps greater than number of periods of data")
-
-    loc_avg = sum(df_current) / len(df_current) 
-    diff = (df_current.iloc[c] - loc_avg) / 100
-    if (diff <= 0):
-        diff = -1
-    elif (diff > 0 and diff <= min_per_change):
-        diff = 0
-    else:
-        diff = 1
-    
-    counter = 0 # Not applicable for offline data
-    
-    # Technical indicators
-    ma = moving_average(df_current, counter, diff)
-    ema = exp_moving_average(df_current, counter, diff)
-    macd = MACD(df_current, counter, diff)
-    bb = bol_bands(df_current, counter)
-    rsi = rel_strength_index(df_current, counter)
-    cci = comm_chann_index(df_current, counter)
-    so = stoch_oscillator(df_current, counter)
-
-    # Average
-    threshold = (ma + ema + macd + bb + rsi + cci + so) / 7
-    print(threshold)
