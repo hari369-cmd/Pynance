@@ -21,11 +21,14 @@ c = time_steps - 1 # Recent price index
 counter = -1 # Counter for number of times data is obtained (Selenium)
 style.use("ggplot")
 
+# Choose the method of initialization
+LIVE = 0 # 1-Obtain data live, 0-Use pre-existing data (check get_data)
+
 # For pre-existing data or for long data intervals
-get_data = 1 # 1-Obtain past data, 0-Use saved data
+get_data = 0 # 1-Obtain past data, 0-Use saved data
 ticker = 'GC=F' # Stock ticker
-start = dt.datetime(2020, 4, 1) # Start time for data from Yahoo
-end = dt.datetime(2020, 8, 29) # End time for data from Yahoo
+start = dt.datetime(2020, 3, 1) # Start time for data from Yahoo
+end = dt.datetime(2020, 7, 29) # End time for data from Yahoo
 min_per_change = 0.03 # Minimum percentage change of stock price
 
 # Choose the method of initialization
@@ -224,7 +227,6 @@ def rel_strength_index(df_current, counter):
 
     if (avg_low == 0):
         avg_low = 1
-
     RS = avg_high / avg_low
     RSI = 100 - (100 / (1 + RS)) # RSI values lie between 0 to 100
     
@@ -255,6 +257,9 @@ def comm_chann_index(df_current, counter):
     if (df_25ma_std.iloc[c] == 0):
         df_25ma_std.iloc[c] = 1 
 
+    if (df_25ma_std.iloc[c] == 0):
+        df_25ma_std.iloc[c] = 1
+        
     TP = (df_max + df_min + recent_price) / 3
     CCI = (TP - df_25ma.iloc[c]) / (CONST * df_25ma_std.iloc[c]) # returns values between -100 to 100
 
@@ -362,9 +367,12 @@ for i in range(100):
         df = read_csv()
         df.drop(["Date","Open","High","Low","Close","Volume"], 1, inplace=True)
         df_temp = df[(len(df) - time_steps):]
-        df_current = pd.Series(df_temp['Adj Close'])
-        
+        df_current = df_temp.iloc[:,0]
+    
         if (len(df_current) < time_steps):
+            if (len(df_current) == 0):
+                print("Input data set is empty. Check the csv file")
+                exit()
             print("Time steps greater than number of periods of data")
 
         loc_avg = sum(df_current) / len(df_current) 
