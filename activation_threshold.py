@@ -188,11 +188,11 @@ def bol_bands(df_current, counter):
     Upper = df_7ma.iloc[c] + (df_7std.iloc[c] * 2)
     Lower = df_7ma.iloc[c] - (df_7std.iloc[c] * 2)
 
-    if (recent_price <= Lower):
+    if (recent_price < Lower):
         return -1
-    elif (recent_price > Lower and recent_price < Upper):
+    elif (recent_price >= Lower and recent_price <= Upper):
         return 0
-    elif (recent_price >= Upper):
+    elif (recent_price > Upper):
         return 1
 
 
@@ -221,6 +221,10 @@ def rel_strength_index(df_current, counter):
       
     avg_high = sum(df_high) / len(df_high)
     avg_low = sum(df_low) / len(df_low)
+
+    if (avg_low == 0):
+        avg_low = 1
+
     RS = avg_high / avg_low
     RSI = 100 - (100 / (1 + RS)) # RSI values lie between 0 to 100
     
@@ -247,6 +251,9 @@ def comm_chann_index(df_current, counter):
 
     df_25ma = df_ma.rolling(window = 25, min_periods = 0).mean()
     df_25ma_std = df_ma.rolling(window = 25, min_periods = 0).std()
+    
+    if (df_25ma_std.iloc[c] == 0):
+        df_25ma_std.iloc[c] = 1 
 
     TP = (df_max + df_min + recent_price) / 3
     CCI = (TP - df_25ma.iloc[c]) / (CONST * df_25ma_std.iloc[c]) # returns values between -100 to 100
@@ -269,9 +276,13 @@ def stoch_oscillator(df_current, counter):
     
     df_max = max(df_current)
     df_min = min(df_current)
+    denominator = df_max - df_min
 
+    if (denominator == 0):
+        denominator = 1
+    
     # K returns values between 0 to 100
-    K = ((recent_price - df_min) / (df_max - df_min)) * 100
+    K = ((recent_price - df_min) / denominator) * 100
     
     if (K < LOW):
         return 1
@@ -331,14 +342,14 @@ for i in range(100):
             ema = exp_moving_average(df_current, counter, diff)
             macd = MACD(df_current, counter, diff)
             bb = bol_bands(df_current, counter)
-            # rsi = rel_strength_index(df_current, counter)
-            rsi = 0
+            rsi = rel_strength_index(df_current, counter)
             cci = comm_chann_index(df_current, counter)
             so = stoch_oscillator(df_current, counter)
 
             # Average
             threshold = (ma + ema + macd + bb + rsi + cci + so) / 7
-            print(threshold)
+            # print(threshold)
+            print(threshold, ma, ema, macd, bb, rsi, cci, so)
 
             # Activation condition
             # Code above should be inside the Selenium's "for" loop
