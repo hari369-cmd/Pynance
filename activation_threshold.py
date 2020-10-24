@@ -326,7 +326,6 @@ for i in range(100):
             else:
                 diff = 1
 
-
             # Technical indicators
             ma = moving_average(df_current, counter, diff)
             ema = exp_moving_average(df_current, counter, diff)
