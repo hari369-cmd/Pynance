@@ -221,7 +221,7 @@ def rel_strength_index(df_current, counter):
     avg_low = sum(df_low) / len(df_low)
 
     if (avg_low == 0):
-        avg_low == 1
+        avg_low = 1
     
     RS = avg_high / avg_low
     RSI = 100 - (100 / (1 + RS)) # RSI values lie between 0 to 100
