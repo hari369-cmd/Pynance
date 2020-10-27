@@ -15,6 +15,9 @@ from time import sleep
 from selenium.webdriver.common.keys import Keys
 from webdriver_manager.chrome import ChromeDriverManager
 
+#Ignoring Error warning
+pd.options.mode.chained_assignment = None 
+
 # Basic initialization
 time_steps = 60 # Minimum number of time data required
 c = time_steps - 1 # Recent price index
@@ -299,18 +302,16 @@ def stoch_oscillator(df_current, counter):
 
 driver = webdriver.Chrome(ChromeDriverManager().install())
 
-driver.get("https://goldprice.org/")
+driver.get("https://www.investing.com/commodities/gold")
 i = 1
 for i in range(100):
     sleep(1)
-    price = driver.find_element_by_xpath('//*[@id="gpxtickerLeft_price"]').text
+    price = driver.find_element_by_xpath('//*[@id="last_last"]').text
     price = float(price.replace(",",""))
 
     i +=1
 
-
     if (LIVE == 1):
-        # The following code should be inside the Selenium's "for" loop
         counter += 1
         time = dt.datetime.now()
 
@@ -356,8 +357,6 @@ for i in range(100):
             # print(threshold)
             print(threshold, ma, ema, macd, bb, rsi, cci, so)
 
-            # Activation condition
-            # Code above should be inside the Selenium's "for" loop
 
     else:
         if(get_data == 1):
