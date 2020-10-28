@@ -14,6 +14,8 @@ from selenium import webdriver
 from time import sleep
 from selenium.webdriver.common.keys import Keys
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.options import Options  # for suppressing the browser
+
 
 #Ignoring Error warning
 pd.options.mode.chained_assignment = None 
@@ -300,9 +302,14 @@ def stoch_oscillator(df_current, counter):
         return -1
 
 
-driver = webdriver.Chrome(ChromeDriverManager().install())
 
+#Selenium headless
+chrome_options = Options()
+chrome_options.add_argument("--headless")
+chromedriv_location = ChromeDriverManager().install()
+driver = webdriver.Chrome(chromedriv_location, options=chrome_options)
 driver.get("https://www.investing.com/commodities/gold")
+
 i = 1
 for i in range(100):
     sleep(1)
@@ -397,3 +404,5 @@ for i in range(100):
         # Average
         threshold = (ma + ema + macd + bb + rsi + cci + so) / 7
         print(threshold)
+
+driver.close()
