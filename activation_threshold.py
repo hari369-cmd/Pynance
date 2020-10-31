@@ -16,20 +16,20 @@ from selenium.webdriver.common.keys import Keys
 from webdriver_manager.chrome import ChromeDriverManager
 
 # Basic initialization
-time_steps = 60 # Minimum number of time data required
+time_steps = 30 # Minimum number of time data required
 c = time_steps - 1 # Recent price index
 counter = -1 # Counter for number of times data is obtained (Selenium)
 style.use("ggplot")
 
 # Choose the method of initialization
-LIVE = 0 # 1-Obtain data live, 0-Use pre-existing data (check get_data)
+LIVE = 1 # 1-Obtain data live, 0-Use pre-existing data (check get_data)
 
 # For pre-existing data or for long data intervals
 get_data = 0 # 1-Obtain past data, 0-Use saved data
 ticker = 'GC=F' # Stock ticker
 start = dt.datetime(2020, 3, 1) # Start time for data from Yahoo
 end = dt.datetime(2020, 7, 29) # End time for data from Yahoo
-min_per_change = 0.03 # Minimum percentage change of stock price
+min_per_change = 0.25 # Minimum percentage change of stock price
 
 # Choose the method of initialization
 LIVE = 1 # 1-Obtain data live, 0-Use pre-existing data
@@ -37,15 +37,15 @@ datafile = '{}.csv'.format(ticker) # The pre-existing datafile or this will be t
 
 
 
-def write_csv(data):
-    with open(datafile, 'a') as outfile:
+def write_csv(data, file):
+    with open(file, 'a') as outfile:
         writer = csv.writer(outfile)
         writer.writerow(data)
 
 
 
-def read_csv():
-    df = pd.read_csv(datafile, index_col=False)
+def read_csv(file):
+    df = pd.read_csv(file, index_col=False)
     return df
 
 
@@ -301,8 +301,8 @@ driver = webdriver.Chrome(ChromeDriverManager().install())
 
 driver.get("https://goldprice.org/")
 i = 1
-for i in range(100):
-    sleep(1)
+for i in range(1000):
+    sleep(120)
     price = driver.find_element_by_xpath('//*[@id="gpxtickerLeft_price"]').text
     price = float(price.replace(",",""))
 
@@ -315,26 +315,22 @@ for i in range(100):
         time = dt.datetime.now()
 
         if(counter < time_steps):
-            write_csv([time, price])
+            write_csv([time, price], datafile)
 
         if(counter > time_steps):
-            write_csv([time, price])
-            df = read_csv()
+            write_csv([time, price], datafile)
+            df = read_csv(datafile)
             # Obtain the min. number of time period data and save it in df_current
             df_temp = df[(len(df) - time_steps):]
-            #Changed for only prices
-            #df_temp.columns = ['date','price']
-            #df_temp = df_temp.drop(columns='date')
             df_temp.drop(df.columns[0], 1, inplace=True)
-            #df_current = pd.Series(df_temp['price'])
             df_current = df_temp.iloc[:,0]
 
 
             if (len(df_current) < time_steps):
                 print("Time steps greater than number of periods of data")
 
-            loc_avg = sum(df_current)/ len(df_current)
-            diff = (df_current.iloc[c] - loc_avg) / 100
+            loc_avg = sum(df_current[:-1])/ (len(df_current) - 1)
+            diff = (df_current.iloc[c] - loc_avg) / loc_avg
             if (diff <= 0):
                 diff = -1
             elif (diff > 0 and diff <= min_per_change):
@@ -354,7 +350,8 @@ for i in range(100):
             # Average
             threshold = (ma + ema + macd + bb + rsi + cci + so) / 7
             # print(threshold)
-            print(threshold, ma, ema, macd, bb, rsi, cci, so)
+            print(price, threshold, ma, ema, macd, bb, rsi, cci, so)
+            write_csv([time, i, price, threshold], 'threshold.csv')
 
             # Activation condition
             # Code above should be inside the Selenium's "for" loop
@@ -362,9 +359,9 @@ for i in range(100):
     else:
         if(get_data == 1):
             df_web = web.get_data_yahoo(ticker, start, end)
-            df_web.to_csv(datafile)
+            df_web.to_csv(file)
             
-        df = read_csv()
+        df = read_csv(datafile)
         df.drop(["Date","Open","High","Low","Close","Volume"], 1, inplace=True)
         df_temp = df[(len(df) - time_steps):]
         df_current = df_temp.iloc[:,0]
@@ -375,8 +372,8 @@ for i in range(100):
                 exit()
             print("Time steps greater than number of periods of data")
 
-        loc_avg = sum(df_current) / len(df_current) 
-        diff = (df_current.iloc[c] - loc_avg) / 100
+        loc_avg = sum(df_current[:-1]) / (len(df_current) - 1) 
+        diff = (df_current.iloc[c] - loc_avg) / loc_avg
         if (diff <= 0):
             diff = -1
         elif (diff > 0 and diff <= min_per_change):
