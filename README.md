@@ -5,12 +5,14 @@
 The requirements.txt file contains the necessary Python packages with the versions you need to run the script.
 Just run $pip install -r requirements.txt to first install everything necessary.
 
-Since the Selenium part is not included yet, the code can be operated (for now) only in the pre-existing data mode (`LIVE = 0`).
+The code could be run in two modes: live data mode (`LIVE = 1`), and pre-existing data mode (`LIVE = 0`).
 If you do not have any pre-existing stock data, do the following:
 1. Set `get_data = 1` and make sure `LIVE = 0`
 2. Change the 'GC=F' in the _ticker_ variable for a ticker of your choice
 3. Set the _start_ and _end_ times during which the data is required. The data will be obtained from Yahoo finance and the default data interval is 1 day. 
 4. Run the code.
+
+In live data mode, the code uses Selenium to obtain the price data from the desired website(s) through xpath. 
 
 Running the code will save a csv file titled "xx.csv", where xx is the ticker, to the local folder your code is in.
 
