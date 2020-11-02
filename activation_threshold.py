@@ -342,7 +342,7 @@ for i in range(100):
                 print("Time steps greater than number of periods of data")
 
             loc_avg = sum(df_current)/ len(df_current)
-            diff = (df_current.iloc[c] - loc_avg) / 100
+            diff = (df_current.iloc[c] - loc_avg) / loc_avg
             if (diff <= 0):
                 diff = -1
             elif (diff > 0 and diff <= min_per_change):
@@ -382,7 +382,7 @@ for i in range(100):
             print("Time steps greater than number of periods of data")
 
         loc_avg = sum(df_current) / len(df_current) 
-        diff = (df_current.iloc[c] - loc_avg) / 100
+        diff = (df_current.iloc[c] - loc_avg) / loc_avg
         if (diff <= 0):
             diff = -1
         elif (diff > 0 and diff <= min_per_change):
@@ -406,3 +406,10 @@ for i in range(100):
         print(threshold)
 
 driver.close()
+
+#other stocks 
+#hyperparameters fix : how to determine 
+
+if __name__ == "__main__":
+    main()
+    
