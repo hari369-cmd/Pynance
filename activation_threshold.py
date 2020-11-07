@@ -310,9 +310,18 @@ chromedriv_location = ChromeDriverManager().install()
 driver = webdriver.Chrome(chromedriv_location, options=chrome_options)
 driver.get("https://www.investing.com/commodities/gold")
 
-i = 1
-for i in range(100):
-    sleep(1)
+
+def csv_file(data):
+    with open('data_5_nov.csv', 'a') as gold_csv:
+        writer = csv.writer(gold_csv)
+        writer.writerow(data)
+
+csv_file(['Time', 'Price', 'MA', 'EMA', 'MACD', 'BB', 'RSI', 'CCI','SO', 'Threshold'])
+
+
+i = 0
+for i in range(1440):
+    sleep(60)
     price = driver.find_element_by_xpath('//*[@id="last_last"]').text
     price = float(price.replace(",",""))
 
@@ -361,8 +370,8 @@ for i in range(100):
 
             # Average
             threshold = (ma + ema + macd + bb + rsi + cci + so) / 7
-            # print(threshold)
-            print(threshold, ma, ema, macd, bb, rsi, cci, so)
+            print(time, price, ma, ema, macd, bb, rsi, cci, so, threshold)
+            csv_file([time, price, ma, ema, macd, bb, rsi, cci, so, threshold])
 
 
     else:
@@ -405,11 +414,6 @@ for i in range(100):
         threshold = (ma + ema + macd + bb + rsi + cci + so) / 7
         print(threshold)
 
+
 driver.close()
 
-#other stocks 
-#hyperparameters fix : how to determine 
-
-if __name__ == "__main__":
-    main()
-    
