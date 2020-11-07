@@ -70,7 +70,7 @@ def moving_average(df_current, counter, diff):
     
     if (df_7ma.iloc[c] < df_15ma.iloc[c]):
         
-        if (diff <= 0):
+        if (diff < 0):
             return -weight_1
         elif (diff == 0):
             return -weight_3
