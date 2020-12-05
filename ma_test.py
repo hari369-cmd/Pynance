@@ -15,7 +15,7 @@ c = time_steps - 1
 def diff_calc(data_f):
     df_temp = data_f
     loc_avg = sum(df_temp) / len(df_temp) 
-    diff = (df_temp.iloc[c] - loc_avg) / df_temp.iloc[c]    
+    diff = (df_temp.iloc[c] - loc_avg) / loc_avg #or can use "df_temp.iloc[c]" --> doesnt effect the plot
     return diff
 
 diff_ = []
