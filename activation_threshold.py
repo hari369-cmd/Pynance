@@ -15,7 +15,7 @@ from time import sleep
 from selenium.webdriver.common.keys import Keys
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.options import Options  # for suppressing the browser
-
+23
 
 #Ignoring Error warning
 pd.options.mode.chained_assignment = None 
@@ -69,7 +69,7 @@ def moving_average(df_current, counter, diff):
     weight_4 = 0.15
     
     if (df_7ma.iloc[c] < df_15ma.iloc[c]):
-        
+        #sell
         if (diff < 0):
             return -weight_1
         elif (diff == 0):
@@ -78,7 +78,7 @@ def moving_average(df_current, counter, diff):
             return weight_4
         
     if (df_7ma.iloc[c] == df_15ma.iloc[c]):
-        
+        #nothing
         if (diff < 0):
             return -weight_3
         elif (diff == 0):
@@ -87,7 +87,8 @@ def moving_average(df_current, counter, diff):
             return weight_3
         
     if (df_7ma.iloc[c] > df_15ma.iloc[c]):
-
+        #buy
+        # In uptrend diff calc. should be different and normalized by df_current.iloc[c]
         if (diff < 0):
             return -weight_3
         elif (diff == 0):
@@ -303,54 +304,95 @@ def stoch_oscillator(df_current, counter):
 
 
 
-#Selenium headless
-chrome_options = Options()
-chrome_options.add_argument("--headless")
-chromedriv_location = ChromeDriverManager().install()
-driver = webdriver.Chrome(chromedriv_location, options=chrome_options)
-driver.get("https://www.investing.com/commodities/gold")
-
-
 def csv_file(data):
     with open('data_5_nov.csv', 'a') as gold_csv:
         writer = csv.writer(gold_csv)
         writer.writerow(data)
 
-csv_file(['Time', 'Price', 'MA', 'EMA', 'MACD', 'BB', 'RSI', 'CCI','SO', 'Threshold'])
+def selenium_run():
+
+    #Selenium headless
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chromedriv_location = ChromeDriverManager().install()
+    driver = webdriver.Chrome(chromedriv_location, options=chrome_options)
+    driver.get("https://www.investing.com/commodities/gold")
+
+    csv_file(['Time', 'Price', 'MA', 'EMA', 'MACD', 'BB', 'RSI', 'CCI','SO', 'Threshold'])
 
 
-i = 0
-for i in range(1440):
-    sleep(60)
-    price = driver.find_element_by_xpath('//*[@id="last_last"]').text
-    price = float(price.replace(",",""))
+    i = 0
+    for i in range(1440):
+        sleep(60)
+        price = driver.find_element_by_xpath('//*[@id="last_last"]').text
+        price = float(price.replace(",",""))
 
-    i +=1
+        i +=1
 
-    if (LIVE == 1):
-        counter += 1
-        time = dt.datetime.now()
+        if (LIVE == 1):
+            counter += 1
+            time = dt.datetime.now()
 
-        if(counter < time_steps):
-            write_csv([time, price])
+            if(counter < time_steps):
+                write_csv([time, price])
 
-        if(counter > time_steps):
-            write_csv([time, price])
+            if(counter > time_steps):
+                write_csv([time, price])
+                df = read_csv()
+                # Obtain the min. number of time period data and save it in df_current
+                df_temp = df[(len(df) - time_steps):]
+                #Changed for only prices
+                #df_temp.columns = ['date','price']
+                #df_temp = df_temp.drop(columns='date')
+                df_temp.drop(df.columns[0], 1, inplace=True)
+                #df_current = pd.Series(df_temp['price'])
+                df_current = df_temp.iloc[:,0]
+
+
+                if (len(df_current) < time_steps):
+                    print("Time steps greater than number of periods of data")
+
+                loc_avg = sum(df_current)/ len(df_current)
+                diff = (df_current.iloc[c] - loc_avg) / loc_avg
+                if (diff <= 0):
+                    diff = -1
+                elif (diff > 0 and diff <= min_per_change):
+                    diff = 0
+                else:
+                    diff = 1
+
+                # Technical indicators
+                ma = moving_average(df_current, counter, diff)
+                ema = exp_moving_average(df_current, counter, diff)
+                macd = MACD(df_current, counter, diff)
+                bb = bol_bands(df_current, counter)
+                rsi = rel_strength_index(df_current, counter)
+                cci = comm_chann_index(df_current, counter)
+                so = stoch_oscillator(df_current, counter)
+
+                # Average
+                threshold = (ma + ema + macd + bb + rsi + cci + so) / 7
+                print(time, price, ma, ema, macd, bb, rsi, cci, so, threshold)
+                csv_file([time, price, ma, ema, macd, bb, rsi, cci, so, threshold])
+
+
+        else:
+            if(get_data == 1):
+                df_web = web.get_data_yahoo(ticker, start, end)
+                df_web.to_csv(datafile)
+                
             df = read_csv()
-            # Obtain the min. number of time period data and save it in df_current
+            df.drop(["Date","Open","High","Low","Close","Volume"], 1, inplace=True)
             df_temp = df[(len(df) - time_steps):]
-            #Changed for only prices
-            #df_temp.columns = ['date','price']
-            #df_temp = df_temp.drop(columns='date')
-            df_temp.drop(df.columns[0], 1, inplace=True)
-            #df_current = pd.Series(df_temp['price'])
             df_current = df_temp.iloc[:,0]
-
-
+        
             if (len(df_current) < time_steps):
+                if (len(df_current) == 0):
+                    print("Input data set is empty. Check the csv file")
+                    exit()
                 print("Time steps greater than number of periods of data")
 
-            loc_avg = sum(df_current)/ len(df_current)
+            loc_avg = sum(df_current) / len(df_current) 
             diff = (df_current.iloc[c] - loc_avg) / loc_avg
             if (diff <= 0):
                 diff = -1
@@ -358,7 +400,9 @@ for i in range(1440):
                 diff = 0
             else:
                 diff = 1
-
+            
+            counter = 0 # Not applicable for offline data
+            
             # Technical indicators
             ma = moving_average(df_current, counter, diff)
             ema = exp_moving_average(df_current, counter, diff)
@@ -370,50 +414,8 @@ for i in range(1440):
 
             # Average
             threshold = (ma + ema + macd + bb + rsi + cci + so) / 7
-            print(time, price, ma, ema, macd, bb, rsi, cci, so, threshold)
-            csv_file([time, price, ma, ema, macd, bb, rsi, cci, so, threshold])
+            print(threshold)
 
 
-    else:
-        if(get_data == 1):
-            df_web = web.get_data_yahoo(ticker, start, end)
-            df_web.to_csv(datafile)
-            
-        df = read_csv()
-        df.drop(["Date","Open","High","Low","Close","Volume"], 1, inplace=True)
-        df_temp = df[(len(df) - time_steps):]
-        df_current = df_temp.iloc[:,0]
-    
-        if (len(df_current) < time_steps):
-            if (len(df_current) == 0):
-                print("Input data set is empty. Check the csv file")
-                exit()
-            print("Time steps greater than number of periods of data")
-
-        loc_avg = sum(df_current) / len(df_current) 
-        diff = (df_current.iloc[c] - loc_avg) / loc_avg
-        if (diff <= 0):
-            diff = -1
-        elif (diff > 0 and diff <= min_per_change):
-            diff = 0
-        else:
-            diff = 1
-        
-        counter = 0 # Not applicable for offline data
-        
-        # Technical indicators
-        ma = moving_average(df_current, counter, diff)
-        ema = exp_moving_average(df_current, counter, diff)
-        macd = MACD(df_current, counter, diff)
-        bb = bol_bands(df_current, counter)
-        rsi = rel_strength_index(df_current, counter)
-        cci = comm_chann_index(df_current, counter)
-        so = stoch_oscillator(df_current, counter)
-
-        # Average
-        threshold = (ma + ema + macd + bb + rsi + cci + so) / 7
-        print(threshold)
-
-
-driver.close()
+    driver.close()
 
