@@ -37,7 +37,6 @@ def get_data(ticker, data_range, data_interval):
     dt = pd.Series(map(lambda x: arrow.get(x).to('Asia/Tokyo').datetime.replace(tzinfo = None),
                        body['timestamp']), name='Datetime')
     df = pd.DataFrame(body['indicators']['quote'][0], index=dt)
-    dg = pd.DataFrame(body['timestamp'])    
     df = df.loc[:, ('open', 'high', 'low', 'close', 'volume')]
     #Renaming columns in pandas
     df.columns = ['OPEN', 'HIGH','LOW','CLOSE','VOLUME']
@@ -48,7 +47,6 @@ def get_data(ticker, data_range, data_interval):
             df['CLOSE'][i] = (df['CLOSE'][i - 2] + df['CLOSE'][i - 1]) / 2
             
     return df
-
 
 
 def main():

@@ -8,11 +8,6 @@ import M_intraday_data as mi
 import argparse
 import plotly.express as px
 
-
-parser = argparse.ArgumentParser(description="Visualize indicators and price chart")
-parser.add_argument('-l','--location', type=str, required=True, help='Location of the stock data in csv')
-args = parser.parse_args()
-
 time_steps = 60 
 c = time_steps - 1
 
@@ -99,4 +94,7 @@ def main():
     plot_stockonly(args.location)
 
 if __name__=="__main__":
+    parser = argparse.ArgumentParser(description="Visualize indicators and price chart")
+    parser.add_argument('-l','--location', type=str, required=True, help='Location of the stock data in csv')
+    args = parser.parse_args()
     main()
