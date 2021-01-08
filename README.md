@@ -1,30 +1,23 @@
-# Pynance
+Files in this folder:
+01) M_buy_sell_routine.py
+02) M_intraday_data.py
+03) test_diff.py
+04) test_threshold.py
 
-# Instructions on how to run the code
+Files starting with 'M' can be imported as modules or can be compiled individually.
 
-The requirements.txt file contains the necessary Python packages with the versions you need to run the script.
-Just run $pip install -r requirements.txt to first install everything necessary.
+Instructions:
+01) Run M_intraday_data.py as an individual code.
+02) Run test_diff.py
+03) Run test_threshold.py
 
-Since the Selenium part is not included yet, the code can be operated (for now) only in the pre-existing data mode (`LIVE = 0`).
-If you do not have any pre-existing stock data, do the following:
-1. Set `get_data = 1` and make sure `LIVE = 0`
-2. Change the 'GC=F' in the _ticker_ variable for a ticker of your choice
-3. Set the _start_ and _end_ times during which the data is required. The data will be obtained from Yahoo finance and the default data interval is 1 day. 
-4. Run the code.
+What the code does:
+01) M_intraday_data.py
+When executed as an individual file, it creates a folder 'Intraday_stock_data'. Then 1 week intraday data (1 min intervals) is obtained from Yahoo finance for 136 companies and is saved in the 'Intraday_stock_data' folder as csv files.
+When executed as a module, it is usually imported as 'mid' in test_diff.py and test_threshold.py and is primarily used to obtain the tickers of the 136 companies.
 
-Running the code will save a csv file titled "xx.csv", where xx is the ticker, to the local folder your code is in.
+02) test_diff.py
+When executed, it creates a folder 'stocks_diff'. It reads through the csv files in the 'Intraday_stock_data' folder and finds the diff parameter along with the mean, variance and standard deviation for the stock prices. It then outputs a csv file ({company}_diff.csv) in the 'stocks_diff' folder. These output files are then re-read in the second half of execution and the profits are estimated using the M_buy_sell_routine.py module imported as bsr. The    profits of each company is combined into a single csv file and is exported as 'profits_diff.csv'.
 
-# What to expect from the code
-
-The code will calculate a parameter called "_threshold_" and this parameter will lie in the range [-1, 1]. The _threshold_ is calculated as an average of momentum deciding parameters obtained from 7 technical indicators. The 7 indicators are as follows:
-1. Moving Average (ma)
-2. Exponential Moving Average (ema)
-3. Moving Average Convergence Divergence (macd)
-4. Bollinger Bands (bb)
-5. Relative Strength Index (rsi)
-6. Commodity Channel Index (cci)
-7. Stochastic Oscillator (si)
-
-The momentum deciding parameters obtained from these 7 indicators also lie in the range [-1, 1]. The momentum deciding parameters are estimated based on the difference between the current and average of previous prices parameter called "_diff_" and based on variables corresponding to each indicator.
-
-The _diff_ parameter is decided by comparing with a parameter called "_min_per_change_". _min_per_change_ is the minimum percentage of change required between current price of the stock and the average of previous prices and is set by the user. _min_per_change_ is positive if _diff_ is positive and so on. Thus _min_per_change_ acts as the sensitivity parameter. Fine tuning can be done by adjusting the weights and variables in each technical indicator.
+03) test_threshold.py
+Similar to test_diff.py, when executed, it creates a folder 'stocks_threshold'. It reads through the csv files in the 'Intraday_stock_data' folder and finds the threshold parameter along with the mean, variance and standard deviation for the stock prices. It then outputs a csv file ({company}_threshold.csv) in the 'stocks_threshold' folder. These output files are then re-read in the second half of execution and the profits are estimated using the M_buy_sell_routine.py module imported as bsr. The profits of each company is combined into a single csv file and is exported as 'profits_threshold.csv'.
