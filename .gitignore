@@ -1,1 +1,5 @@
 *.csv
+stocks_diff
+Intraday_stock_data
+*.pickle
+__pycache__
